@@ -1,5 +1,6 @@
 import homePage from './pages/Home';
-import Layout from './components/Layout'
+import loginPage from './pages/Login';
+import Layout from './components/Layout';
 import {
   BrowserRouter as Router,
   Route,
@@ -11,6 +12,11 @@ const routes = [
     path: '/',
     title: 'Home',
     Component: homePage
+  },
+  {
+    path: '/login',
+    title: 'Login',
+    Component: loginPage
   }
 ]
 

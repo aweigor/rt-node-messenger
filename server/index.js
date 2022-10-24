@@ -1,17 +1,22 @@
+const path = require("path");
 const express = require('express');
 const uuid = require('uuid').v4;
 const session = require('express-session');
-const FileStore = require('./auth/session-store')(session);
+const FileStore = require('./lib/auth/session-file-store')(session);
 const bodyParser = require('body-parser');
 const passport = require('passport');
-const AnonymJSONStrategy = require('./auth/passport-anonym-json/lib/index').Strategy;
+const { Server } =require('socket.io');
+const { createServer } = require('http');
+const AnonymJSONStrategy = require('./lib/auth/passport-local-custom/lib').Strategy;
+
+const port = 8000;
 
 // Use the BasicStrategy within Passport.
 //   This is used as a fallback in requests that prefer authentication, but
 //   support unauthenticated clients.
 passport.use(new AnonymJSONStrategy(
   { 
-    identityField: 'email',
+    identityField: 'username',
     extraFields: [ 'password' ]
   },
   (req, {user,identity}, done) => {
@@ -38,22 +43,32 @@ passport.deserializeUser((user, done) => {
 
 // create the server
 const app = express();
+const httpServer = createServer(app);
 
-// add & configure middleware
-app.use(bodyParser.urlencoded({ extended: false }))
-app.use(bodyParser.json())
-app.use(session({
-  genid: (req) => {
-    return uuid() // use UUIDs for session IDs
-  },
+const sessionMiddleware = session({
+  genid: () => uuid(),
   store: new FileStore(),
   secret: 'keyboard cat',
   resave: false,
   saveUninitialized: true
-}))
+})
+
+// add & configure middleware
+
+app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.json())
+app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
 
+app.use(express.static(path.join(__dirname, '../client/build')));
+app.use(express.static("public"));
+
+app.use((req, res, next) => {
+  res.sendFile(path.join(__dirname, "../client", "build", "index.html"));
+});
+
+/*
 // create the homepage route at '/'
 app.get('/', (req, res) => {
   res.send(`You got home page!\n`)
@@ -63,6 +78,7 @@ app.get('/', (req, res) => {
 app.get('/login', (req, res) => {
   res.send(`You got the login page!\n`)
 })
+*/
 
 app.post('/login', (req, res, next) => {
   passport.authenticate(['anonymIdentity'], (err, user, info) => 
@@ -72,11 +88,15 @@ app.post('/login', (req, res, next) => {
     if (!user) { return res.redirect('/login'); }
     req.login(user, (err) => {
       if (err) { return next(err); }
-      return res.redirect('/authrequired');
+      //req.session.authenticated = true;
+      //res.status(204).end();
+      res.redirect('/');
+      return true;
     })
   })(req, res, next);
 })
 
+/*
 app.get('/authrequired', (req, res) => {
   if(req.isAuthenticated()) 
   {
@@ -85,8 +105,30 @@ app.get('/authrequired', (req, res) => {
     res.redirect('/')
   }
 })
+*/
 
-// tell the server what port to listen on
-app.listen(3000, () => {
-  console.log('Listening on localhost:3000')
-})
+const io = new Server(httpServer);
+
+// convert a connect middleware to a Socket.IO middleware
+const wrap = middleware => (socket, next) => middleware(socket.request, {}, next);
+
+io.use(wrap(sessionMiddleware));
+io.use(wrap(passport.initialize()));
+io.use(wrap(passport.session()));
+
+// only allow authenticated users
+io.use((socket, next) => {
+  if (socket.request.user) {
+    next();
+  } else {
+    next(new Error('unauthorized'))
+  }
+});
+
+io.on("connection", (socket) => {
+  console.log(socket.request.session);
+});
+
+httpServer.listen(port, () => {
+  console.log(`application is running at: http://localhost:${port}`);
+});
