@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import HttpClient from '../../services/http.fetch.client';
 
-const client = new HttpClient( 'http://localhost:8000' );
+const baseUrl = '';
+const client = new HttpClient( baseUrl );
 
 export default () => {
 

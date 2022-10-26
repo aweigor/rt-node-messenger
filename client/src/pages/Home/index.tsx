@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
+import '../../styles/home.css';
 
-let url ='ws://localhost:8080/ws';
+let url ='ws://localhost:8000/ws';
 const socket = new WebSocket(url);
 
 export default () => {
 
   const [messages, addMessage] = useState<any[]>([]);
-  const inputEl = useRef<HTMLInputElement | null>(null);
+  const inputEl = useRef<HTMLTextAreaElement | null>(null);
+  const outputEl = useRef<HTMLTextAreaElement | null>(null);
   const scope = this;
 
   const onButtonClick = function (e: any) {
@@ -21,9 +23,21 @@ export default () => {
     if (socket) {
       socket.send(message)
     }
-      
+    
   };
-  
+
+  const  handleInput = function ( event: any ) {
+    
+    let data = event.nativeEvent.data;
+    console.log( 'handling input...', event, socket, data );
+    if (socket) {
+      socket.send( JSON.stringify({
+        type: 'input',
+        data: data
+      }) );
+    }
+    
+  };
 
   useEffect( () => {
     
@@ -35,7 +49,7 @@ export default () => {
       addMessage( ( prevState: any[] ) => [...prevState, incomingMessage] );
     };
 
-    socket.onclose = (event:any) => console.log(`Closed ${event.code}`);
+    socket.onclose = ( event:any ) => console.log(`Closed ${event.code}`);
 
     return () => {};
   },[] )
@@ -43,10 +57,9 @@ export default () => {
   return (
     <>
       <div>
-        <form name="publish">
-          <input type="text" ref={inputEl} name="message"/>
-          <input type="submit" onClick={onButtonClick} value="Send"/>
-        </form>
+        <textarea rows={10} cols={45} onChange={handleInput} ref={outputEl} name="outcommingmessage"/>
+        <textarea rows={10} cols={45} onChange={handleInput} ref={inputEl} name="incomming_message"/>
+
         { messages.map( function (message, index) {
             console.log( "MESSAGE", message )
             return (<div key={index}>{message}</div>)

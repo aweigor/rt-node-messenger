@@ -16,7 +16,7 @@ const Content = ({ children } : {children: any}) => {
   )
 }
 
-const Sidebar = ( { routes } : {routes: any} ) => 
+const Navbar = ( { routes } : {routes: any} ) => 
 {  
   const navItems = routes
     .filter( (item:any) => item.title&&item.title.length )
@@ -38,7 +38,7 @@ export default ({ children, routes } : { children:any, routes:any }) => {
   return (
     <>
       <Container>
-        <Sidebar routes = { routes }/>
+        <Navbar routes = { routes }/>
         <Content>
           { children }
         </Content>

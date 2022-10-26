@@ -5,7 +5,7 @@ const session = require('express-session');
 const FileStore = require('./lib/auth/session-file-store')(session);
 const bodyParser = require('body-parser');
 const passport = require('passport');
-const { Server } =require('socket.io');
+const { Server } =require('ws');
 const { createServer } = require('http');
 const AnonymJSONStrategy = require('./lib/auth/passport-local-custom/lib').Strategy;
 
@@ -20,6 +20,7 @@ passport.use(new AnonymJSONStrategy(
     extraFields: [ 'password' ]
   },
   (req, {user,identity}, done) => {
+    console.log( 'creating session...' )
     req.sessionStore.find( identity, ( err, data ) => {
       if ( !err && !data ) {
         done(null, user);
@@ -50,7 +51,7 @@ const sessionMiddleware = session({
   store: new FileStore(),
   secret: 'keyboard cat',
   resave: false,
-  saveUninitialized: true
+  saveUninitialized: false
 })
 
 // add & configure middleware
@@ -64,11 +65,19 @@ app.use(passport.session());
 app.use(express.static(path.join(__dirname, '../client/build')));
 app.use(express.static("public"));
 
+app.get( '/login', (req, res, next) => {
+  res.sendFile(path.join(__dirname, "../client", "build", "index.html"));
+} )
+
+app.get( '/', (req, res, next) => {
+  res.sendFile(path.join(__dirname, "../client", "build", "index.html"));
+} )
+
+/*
 app.use((req, res, next) => {
   res.sendFile(path.join(__dirname, "../client", "build", "index.html"));
 });
 
-/*
 // create the homepage route at '/'
 app.get('/', (req, res) => {
   res.send(`You got home page!\n`)
@@ -81,17 +90,19 @@ app.get('/login', (req, res) => {
 */
 
 app.post('/login', (req, res, next) => {
-  passport.authenticate(['anonymIdentity'], (err, user, info) => 
+  passport.authenticate(['local'], (err, user, info) => 
   {
-    if (info) { return res.send(info.message) }
+    //if (info) { return res.send(info.message) }
     if (err) { return next(err); }
-    if (!user) { return res.redirect('/login'); }
+    if (!user) {
+      if ( info ) {
+        return res.send( { error: 1, message: info[0].message } )
+      }
+      console.log( 'no user provided' )  
+    }
     req.login(user, (err) => {
       if (err) { return next(err); }
-      //req.session.authenticated = true;
-      //res.status(204).end();
-      res.redirect('/');
-      return true;
+      res.send( { error: 0, message: 'Hello!' } );
     })
   })(req, res, next);
 })
@@ -107,27 +118,98 @@ app.get('/authrequired', (req, res) => {
 })
 */
 
-const io = new Server(httpServer);
+const Broadcast = require( './src/broadcast.js' );
+const broadcast = new Broadcast();
 
-// convert a connect middleware to a Socket.IO middleware
-const wrap = middleware => (socket, next) => middleware(socket.request, {}, next);
+const WebsocketMiddleware = function( req, res ) {
 
-io.use(wrap(sessionMiddleware));
-io.use(wrap(passport.initialize()));
-io.use(wrap(passport.session()));
+  this.commutations = Object.create( null );
+  this.clients = new Set();
 
-// only allow authenticated users
-io.use((socket, next) => {
-  if (socket.request.user) {
-    next();
-  } else {
-    next(new Error('unauthorized'))
+  this.broadcast = function ( message, sessionId ) {
+    const commutationList = scope.commutations[ sessionId ];
+
+    if ( commutationList&&commutationList.length ) {
+
+      const removalIds = [];
+
+      for ( let i = 0, socket; i < commutationList.length; i++  ) {
+
+        socket = commutationList[i];
+
+        if ( !scope.clients.has( socket ) ) {
+          removalIds.push( i );
+        } else {
+          socket.send( message );
+        }
+      }
+
+      if ( removalIds.length ) 
+        scope.commutations[ sessionId ] = scope.reap( commutationList, removalIds )
+    }
   }
-});
 
-io.on("connection", (socket) => {
-  console.log(socket.request.session);
-});
+  this.reap = function ( arr, removelIds ) {
+    let reaped = [];
+
+    if ( arr instanceof Array ) {
+      
+      reaped = JSON.decode( JSON.encode(arr) );
+
+      for ( let i = removelIds.length - 1; i >= 0; i-- ) {
+        reaped.splice( removalIds[i],1 );
+      }
+
+    }
+
+    return reaped;
+  }
+
+  const scope = this;
+  const ws = new Server({server: httpServer});
+
+  ws.on( 'connection', (socket) => {
+
+    clients.add( socket );
+
+    socket.on( 'message', function ( message ) {
+      try {
+        message = JSON.parse( message );
+
+        if ( message.type === 'listen' ) 
+        {
+          if ( !message.data ) return;
+          if ( !commutations[ message.data ] ) 
+            commutations[ message.data ] = [];
+          
+          commutations[ message.data ].push(socket);
+
+        } else if (message.type === 'commit') 
+        {
+
+          scope.broadcast( message.data, socket.session.Id );
+
+        } else {
+
+          throw new Error();
+
+        }
+      } catch( err ) {
+
+        console.error( err );
+
+      }
+    } )
+
+    socket.on( 'close', function () {
+      clients.delete( socket );
+    } )
+    
+  });
+}
+
+app.use( WebsocketMiddleware );
+
 
 httpServer.listen(port, () => {
   console.log(`application is running at: http://localhost:${port}`);
