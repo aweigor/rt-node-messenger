@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import '../../styles/home.css';
 
+import HttpClient from '../../services/http.fetch.client';
+
+const baseUrl = '';
+const client = new HttpClient( baseUrl );
+
+
 let url ='ws://localhost:8000/ws';
 const socket = new WebSocket(url);
 
@@ -30,12 +36,19 @@ export default () => {
     
     let data = event.nativeEvent.data;
     console.log( 'handling input...', event, socket, data );
+
+    client.post( 'http://localhost:3001/api/login', {asd:'asd'} ).then( res => {
+      console.log( 'result success',res );
+    } )
+
+    /*
     if (socket) {
       socket.send( JSON.stringify({
         type: 'input',
         data: data
       }) );
     }
+    */
     
   };
 

@@ -2,12 +2,12 @@ const path = require("path");
 const express = require('express');
 const uuid = require('uuid').v4;
 const session = require('express-session');
-const FileStore = require('./lib/auth/session-file-store')(session);
+const FileStore = require('./lib/session-file-store')(session);
 const bodyParser = require('body-parser');
 const passport = require('passport');
 const { Server } =require('ws');
 const { createServer } = require('http');
-const AnonymJSONStrategy = require('./lib/auth/passport-local-custom/lib').Strategy;
+const AnonymJSONStrategy = require('./lib/passport-local-custom/lib').Strategy;
 
 const port = 8000;
 
@@ -105,6 +105,17 @@ app.post('/login', (req, res, next) => {
       res.send( { error: 0, message: 'Hello!' } );
     })
   })(req, res, next);
+})
+
+app.post('/authrequired', (req, res) => {
+  if(req.isAuthenticated()) 
+  {
+
+    console.log( 'authenticated!' )
+    res.send( `Hello! ${req.user.email}\n` )
+  } else {
+    res.redirect('/')
+  }
 })
 
 /*
