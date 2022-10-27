@@ -1,30 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import '../../styles/home.css';
 
-let url ='ws://localhost:8000/ws';
-const socket = new WebSocket(url);
+const initWebsocket = function () {
+  let url ='ws://localhost:8001/ws';
+  return new WebSocket(url);
+}
 
 export default () => {
+
+  const socket = initWebsocket();
 
   const [messages, addMessage] = useState<any[]>([]);
   const inputEl = useRef<HTMLTextAreaElement | null>(null);
   const outputEl = useRef<HTMLTextAreaElement | null>(null);
   const scope = this;
-
-  const onButtonClick = function (e: any) {
-    e.preventDefault();
-    e.stopPropagation();
-
-    // `current` points to the mounted text input element
-    const message : string = inputEl.current?inputEl.current.value:'';
-
-    console.log( "BUTTON CLICKED", socket )
-
-    if (socket) {
-      socket.send(message)
-    }
-    
-  };
 
   const  handleInput = function ( event: any ) {
     

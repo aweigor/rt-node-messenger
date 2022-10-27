@@ -1,6 +1,18 @@
 import '../../styles/layout.css';
+import { useNavigate } from "react-router-dom";
 
-const Container = ( { children } : {children: any} ) => {
+const undefinedIdentity = {
+  username: '',
+  password: ''
+}
+
+interface identityInterface {
+  username: string,
+  password: string
+}
+
+const Container = ( { children } : {children: any} ) => 
+{
   return (
     <div className='app-container'>
       { children }
@@ -8,7 +20,8 @@ const Container = ( { children } : {children: any} ) => {
   )
 }
 
-const Content = ({ children } : {children: any}) => {
+const Content = ({ children } : {children: any}) => 
+{
   return (
     <div className='app-content'>
       { children }
@@ -25,7 +38,7 @@ const Navbar = ( { routes } : {routes: any} ) =>
       <li key={ index }>
         <a href={item.path}> { item.title } </a>
       </li> 
-  ) )
+    ) )
 
   return (
     <div className='app-navigation'>
@@ -34,11 +47,45 @@ const Navbar = ( { routes } : {routes: any} ) =>
   )
 }
 
-export default ({ children, routes } : { children:any, routes:any }) => {
+const UserControls = () => 
+{
+  const navigate = useNavigate();
+  let userInfo: string | null = sessionStorage.getItem( 'identity' );
+
+  if (!userInfo) {
+    navigate( '/login' );
+  }
+  const identity: identityInterface = userInfo?JSON.parse( userInfo ):undefinedIdentity;
+
+  return (
+    <>
+      <div className="user-controls">
+        <span>{identity['username']}</span>
+      </div>
+    </>
+  )
+}
+
+const Header = ( { children }: any ) => {
+  return (
+    <>
+      <div className='app-header'>
+        { children }
+      </div>
+    </>
+  )
+}
+
+export default ({ children, routes } : { children:any, routes:any }) => 
+{
   return (
     <>
       <Container>
-        <Navbar routes = { routes }/>
+        <Header>
+          <Navbar routes = { routes }/>
+          <UserControls/>
+        </Header>
+        
         <Content>
           { children }
         </Content>

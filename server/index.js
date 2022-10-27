@@ -102,10 +102,20 @@ app.post('/login', (req, res, next) => {
     }
     req.login(user, (err) => {
       if (err) { return next(err); }
-      res.send( { error: 0, message: 'Hello!' } );
+      res.send( { redirect_url: '/' } );
     })
   })(req, res, next);
 })
+
+app.post( '/user', ( req, res, next ) => 
+{
+  if(req.isAuthenticated()) {
+    res.send( { data: req.user } );
+  } else {
+    res.send( { error: { code: 401, message: 'unauthorized' } } );
+  }
+  return next();
+} )
 
 /*
 app.get('/authrequired', (req, res) => {
@@ -172,7 +182,8 @@ const WebsocketMiddleware = function( req, res ) {
 
     clients.add( socket );
 
-    socket.on( 'message', function ( message ) {
+    socket.on( 'message', function ( message ) 
+    {
       try {
         message = JSON.parse( message );
 

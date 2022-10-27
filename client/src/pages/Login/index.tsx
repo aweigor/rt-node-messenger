@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from "react-router-dom";
 import HttpClient from '../../services/http.fetch.client';
 
 const baseUrl = '';
 const client = new HttpClient( baseUrl );
 
-export default () => {
+export default () => 
+{
+  const navigate = useNavigate();
 
   const inputEl = useRef<HTMLInputElement | null>(null);
 
@@ -18,11 +21,14 @@ export default () => {
     client.post( '/login', {
       username:username
     } ).then( res => {
-      console.log( 'LOGIN RESULT', res );
+      if ( !res.error ) {
+        navigate( res.redirect_url );
+      } else {
+        console.error( res.error.message )
+      }
     } )
       
   };
-
 
   return (
     <form name="publish">
