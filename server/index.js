@@ -2,12 +2,12 @@ const path = require("path");
 const express = require('express');
 const uuid = require('uuid').v4;
 const session = require('express-session');
-const FileStore = require('./lib/auth/session-file-store')(session);
+const FileStore = require('./lib/session-file-store')(session);
 const bodyParser = require('body-parser');
 const passport = require('passport');
 const { Server } =require('ws');
 const { createServer } = require('http');
-const AnonymJSONStrategy = require('./lib/auth/passport-local-custom/lib').Strategy;
+const AnonymJSONStrategy = require('./lib/passport-local-custom/lib').Strategy;
 
 const port = 8000;
 
