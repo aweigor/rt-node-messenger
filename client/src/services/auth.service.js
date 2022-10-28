@@ -1,47 +1,75 @@
-
 import { createContext } from 'react';
-
-
 
 const userContext = createContext();
 
-const getUserData = async function () {
-  //return await client.post( '/user' );
-}
+const AuthService = {
 
-export default class AuthService {
-  
-  constructor () {}
+  userInfo: {},
 
-  static isLoggedIn () 
-  {
+  logIn ( formData ) {
+    const scope = this;
 
-    const identity = {
-      authorized: false,
-      userdata: {}
-    };
+    return new Promise( (resolve, reject) => {
+      if (!scope.client) reject( 'no client provided' );
+
+      scope.client.post( '/login', {
+        username:formData.username
+      } )
+      .then( ( res ) => {
+        if ( !res.error ) {
+          console.log( 'logged in', res )
+          scope.userInfo = res.data;
+          resolve( res );
+        } else {
+          reject( res.error )
+        }
+      } )
+      .finally( () => { resolve(null) } )
+    } )
+  },
+
+  logOut () {},
+
+  init ( client, { loginUrl, logoutUrl } ) {
+    const scope = this;
+    
+    this.client = client;
+    this.loginUrl = loginUrl;
+    this.logoutUrl = logoutUrl;
+
+    return new Promise( async (resolve, reject) => {
+      const res = await scope.getUserData();
+
+      if ( !res.error ) {
+        console.log( res )
+      } else {
+        console.log( res )
+      }
+
+      resolve( userContext )
+    } )
+  },
+
+  async getUserData () {
+    const scope = this;
+    return await scope.client.post( '/user' );
+  },
+
+  get isLoggedIn () {
+    const scope = this;
 
     let isLoggedIn = false;
 
     ( async () => {
-      const res = await getUserData();
+      const res = await scope.getUserData();
 
       if ( !res.error ) {
         isLoggedIn = true;
-        identity.authorized = true;
-        identity.userdata = res.data;
-      } else {
-        identity.authorized = false;
-        identity.userdata = {};
       }
 
     } ) ()
-
-    console.log( 'is logged in', identity )
     return isLoggedIn;
   }
-
-  
 }
 
-export { userContext }
+export { AuthService }

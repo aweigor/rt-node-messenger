@@ -5,9 +5,15 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { AuthService, HttpClient } from './services';
 
-HttpClient.init();
+HttpClient.init( 'http://localhost:8000',{} );
+AuthService.init( HttpClient, {
+  loginUrl: '/login',
+  logoutUrl: '/logout'
+} ).then( (userContext:any) => mountApp( userContext ) )
 
-setTimeout( () => {
+function mountApp ( userContext: any ) {
+  console.log( userContext )
+
   const root = ReactDOM.createRoot(
     document.getElementById('root') as HTMLElement
   );
@@ -16,11 +22,7 @@ setTimeout( () => {
       <App />
     </React.StrictMode>
   );
-  
-},1 )
-
-console.log( HttpClient )
-
+}
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

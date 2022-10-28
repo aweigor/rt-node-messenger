@@ -1,7 +1,7 @@
 import homePage from './pages/Home';
 import runPage from './pages/Runpage';
 import Layout from './components/Layout';
-import AuthService from './services/auth.service';
+import { AuthService } from './services';
 import { useEffect } from 'react';
 
 import {
@@ -44,7 +44,7 @@ const RouterComponents = () =>
   {
     const RouteComponent = () => 
     {
-      const isLoggedIn = AuthService.isLoggedIn();
+      const isLoggedIn = AuthService.isLoggedIn;
       
       return isLoggedIn ? (
         <Layout routes={routes}> <Component/> </Layout>

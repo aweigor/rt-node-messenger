@@ -2,10 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import {HttpClient} from '../../services';
 
-const baseUrl = '';
 const client = HttpClient;
-
-console.log( client )
 
 export default () => 
 {
@@ -19,7 +16,6 @@ export default () =>
 
     // `current` points to the mounted text input element
     const username : string = inputEl.current?inputEl.current.value:'';
-
     
     client.post( '/login', {
       username:username
