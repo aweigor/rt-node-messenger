@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useContext } from 'react';
 import '../../styles/home.css';
+import { HttpClient, AuthService, UserContext } from '../../services';
 
 const initWebsocket = function () {
   let url ='ws://localhost:8001/ws';
@@ -7,6 +8,10 @@ const initWebsocket = function () {
 }
 
 export default () => {
+
+  const { userInfo } = useContext( UserContext );
+
+  console.log( userInfo )
 
   const socket = initWebsocket();
 

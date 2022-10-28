@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useContext } from 'react';
 import { useNavigate } from "react-router-dom";
-import {HttpClient} from '../../services';
+import { HttpClient, AuthService, UserContext } from '../../services';
+
 
 const client = HttpClient;
 
@@ -10,22 +11,22 @@ export default () =>
 
   const inputEl = useRef<HTMLInputElement | null>(null);
 
+  const { userInfo } = useContext( UserContext );
+
+  console.log( userInfo )
+
   const onButtonClick = function (e: any) {
     e.preventDefault();
     e.stopPropagation();
 
     // `current` points to the mounted text input element
     const username : string = inputEl.current?inputEl.current.value:'';
-    
-    client.post( '/login', {
-      username:username
-    } ).then( ( res:any ) => {
-      if ( !res.error ) {
-        navigate( res.redirect_url );
-      } else {
-        console.error( res.error.message )
-      }
-    } )
+
+    AuthService.logIn( { username } )
+    .then( 
+      ( res:any ) => { navigate( res.redirect_url ); },
+      ( error ) => { console.error( error ) } 
+    )
       
   };
 

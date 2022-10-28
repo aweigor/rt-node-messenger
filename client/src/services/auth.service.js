@@ -1,10 +1,8 @@
 import { createContext } from 'react';
 
-const userContext = createContext();
-
 const AuthService = {
 
-  userInfo: {},
+  userInfo: { username:'asd' },
 
   logIn ( formData ) {
     const scope = this;
@@ -12,13 +10,13 @@ const AuthService = {
     return new Promise( (resolve, reject) => {
       if (!scope.client) reject( 'no client provided' );
 
-      scope.client.post( '/login', {
-        username:formData.username
-      } )
+      scope.client.post( '/login', formData )
       .then( ( res ) => {
         if ( !res.error ) {
           console.log( 'logged in', res )
           scope.userInfo = res.data;
+
+          this._onUserStatusChanged&&this._onUserStatusChanged( scope.userInfo )
           resolve( res );
         } else {
           reject( res.error )
@@ -40,13 +38,13 @@ const AuthService = {
     return new Promise( async (resolve, reject) => {
       const res = await scope.getUserData();
 
-      if ( !res.error ) {
-        console.log( res )
+      if ( !res.error&&res.data ) {
+        scope.userInfo = res.data;
       } else {
         console.log( res )
       }
 
-      resolve( userContext )
+      resolve( scope.userInfo )
     } )
   },
 
@@ -69,7 +67,15 @@ const AuthService = {
 
     } ) ()
     return isLoggedIn;
+  },
+
+  onUserStatusChanged ( callback ) {
+    AuthService._onUserStatusChanged = callback;
   }
 }
 
-export { AuthService }
+const UserContext = createContext({
+  userInfo:AuthService.userInfo
+});
+
+export { AuthService, UserContext }

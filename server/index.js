@@ -104,7 +104,7 @@ app.post('/login', (req, res, next) => {
     }
     req.login(user, (err) => {
       if (err) { return next(err); }
-      res.send( { redirect_url: '/runpage' } );
+      res.send( { redirect_url: '/runpage',data:user } );
     })
   })(req, res, next);
 })

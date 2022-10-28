@@ -1,4 +1,4 @@
 import { HttpClient } from './http.fetch.client';
-import { AuthService } from './auth.service';
+import { AuthService, UserContext } from './auth.service';
 
-export { HttpClient, AuthService };
+export { HttpClient, AuthService, UserContext };

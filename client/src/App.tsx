@@ -1,8 +1,8 @@
 import homePage from './pages/Home';
 import runPage from './pages/Runpage';
 import Layout from './components/Layout';
-import { AuthService } from './services';
-import { useEffect } from 'react';
+import { useEffect,useState } from 'react';
+import { AuthService, HttpClient, UserContext } from './services';
 
 import {
   BrowserRouter as Router,
@@ -25,16 +25,18 @@ const routes = [
     Component: runPage
   }
 ]
-const RouterComponents = () => 
+const RouterComponents = ({ userInfo }: any  ) => 
 {
   const publicComponents = routes.filter( r => true ).map( ( { path, Component }, index ) => 
   {
     const RouteComponent = () => 
     {
       return (
-        <Layout routes={routes}>
-          <Component/>
-        </Layout>
+          <Layout routes={routes}>
+            <UserContext.Provider value={{ userInfo }}>
+              <Component/>
+            </UserContext.Provider>
+          </Layout>
       )
     }
     return <Route path={path} element={<RouteComponent/>} key={index}/>
@@ -74,12 +76,19 @@ interface apiUserGetResponseInterface {
 }
 
 
-function App() 
+function App( { identity,onUserStatusChanged }: any ) 
 {
+
+  const [userInfo, setUserInfo] = useState(identity);
+
+  onUserStatusChanged( (identity:any) => {
+    setUserInfo( identity );
+  } )
+
   return (
     <>
       <Router>
-        <RouterComponents />
+        <RouterComponents userInfo={userInfo}/>
       </Router>
     </>
   )
