@@ -1,60 +1,39 @@
 import { useEffect, useRef, useState } from 'react';
-import '../../styles/home.css';
+import { useNavigate } from "react-router-dom";
+import HttpClient from '../../services/http.fetch.client';
 
-const initWebsocket = function () {
-  let url ='ws://localhost:8001/ws';
-  return new WebSocket(url);
-}
+const baseUrl = '';
+const client = new HttpClient( baseUrl );
 
-export default () => {
+export default () => 
+{
+  const navigate = useNavigate();
 
-  const socket = initWebsocket();
+  const inputEl = useRef<HTMLInputElement | null>(null);
 
-  const [messages, addMessage] = useState<any[]>([]);
-  const inputEl = useRef<HTMLTextAreaElement | null>(null);
-  const outputEl = useRef<HTMLTextAreaElement | null>(null);
-  const scope = this;
+  const onButtonClick = function (e: any) {
+    e.preventDefault();
+    e.stopPropagation();
 
-  const  handleInput = function ( event: any ) {
-    
-    let data = event.nativeEvent.data;
-    console.log( 'handling input...', event, socket, data );
-    if (socket) {
-      socket.send( JSON.stringify({
-        type: 'input',
-        data: data
-      }) );
-    }
-    
+    // `current` points to the mounted text input element
+    const username : string = inputEl.current?inputEl.current.value:'';
+
+    client.post( '/login', {
+      username:username
+    } ).then( res => {
+      if ( !res.error ) {
+        navigate( res.redirect_url );
+      } else {
+        console.error( res.error.message )
+      }
+    } )
+      
   };
 
-  useEffect( () => {
-    
-    socket.onmessage = function(event:any) {
-      let incomingMessage = event.data;
-
-      console.log( "socket onmessage", incomingMessage )
-
-      addMessage( ( prevState: any[] ) => [...prevState, incomingMessage] );
-    };
-
-    socket.onclose = ( event:any ) => console.log(`Closed ${event.code}`);
-
-    return () => {};
-  },[] )
-
   return (
-    <>
-      <div>
-        <textarea rows={10} cols={45} onChange={handleInput} ref={outputEl} name="outcommingmessage"/>
-        <textarea rows={10} cols={45} onChange={handleInput} ref={inputEl} name="incomming_message"/>
-
-        { messages.map( function (message, index) {
-            console.log( "MESSAGE", message )
-            return (<div key={index}>{message}</div>)
-          } ) 
-        }
-      </div>
-    </>
+    <form name="publish">
+      <input type="text" ref={inputEl} name="Имя"/>
+      <input type="submit" onClick={onButtonClick} value="Вход"/>
+    </form>
   )
 }

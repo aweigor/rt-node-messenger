@@ -1,5 +1,5 @@
 import homePage from './pages/Home';
-import loginPage from './pages/Login';
+import runPage from './pages/Runpage';
 import Layout from './components/Layout';
 import HttpClient from './services/http.fetch.client';
 import AuthService from './services/auth.service';
@@ -20,15 +20,15 @@ const routes = [
     Component: homePage
   },
   {
-    path: '/login',
-    title: 'Login',
+    path: '/runpage',
+    title: 'Runpage',
     private: false,
-    Component: loginPage
+    Component: runPage
   }
 ]
 const RouterComponents = () => 
 {
-  const publicComponents = routes.filter( r => !r.private ).map( ( { path, Component }, index ) => 
+  const publicComponents = routes.filter( r => true ).map( ( { path, Component }, index ) => 
   {
     const RouteComponent = () => 
     {
@@ -41,7 +41,7 @@ const RouterComponents = () =>
     return <Route path={path} element={<RouteComponent/>} key={index}/>
   } );
 
-  const privateComponents = routes.filter( r => r.private ).map( ( { path, Component }, index ) =>
+  const privateComponents = routes.filter( r => false ).map( ( { path, Component }, index ) =>
   {
     const RouteComponent = () => 
     {
