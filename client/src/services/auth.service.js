@@ -1,14 +1,12 @@
-import HttpClient from './http.fetch.client';
+
 import { createContext } from 'react';
 
 
 
-const client = new HttpClient( );
-
 const userContext = createContext();
 
 const getUserData = async function () {
-  return await client.post( '/user' );
+  //return await client.post( '/user' );
 }
 
 export default class AuthService {

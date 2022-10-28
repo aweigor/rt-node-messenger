@@ -1,7 +1,6 @@
 import homePage from './pages/Home';
 import runPage from './pages/Runpage';
 import Layout from './components/Layout';
-import HttpClient from './services/http.fetch.client';
 import AuthService from './services/auth.service';
 import { useEffect } from 'react';
 
