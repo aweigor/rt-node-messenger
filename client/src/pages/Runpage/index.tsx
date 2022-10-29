@@ -29,7 +29,7 @@ export default () => {
     const handleMessage = ( message: any ) => {
       console.log( 'message handled!', message );
 
-      //addMessage( ( prevState: any[] ) => [...prevState, incomingMessage] );
+      addMessage( ( prevState: any[] ) => [...prevState, message] );
     }
 
     ws.on( 'connected', handleConnection );
@@ -48,13 +48,7 @@ export default () => {
     <>
       <div>
         <textarea rows={10} cols={45} onChange={handleInput} ref={outputEl} name="outcommingmessage"/>
-        <textarea rows={10} cols={45} ref={inputEl} name="incomming_message"/>
-
-        { messages.map( function (message, index) {
-            console.log( "MESSAGE", message )
-            return (<div key={index}>{message}</div>)
-          } ) 
-        }
+        <textarea rows={10} cols={45} value={messages.join('')} ref={inputEl} name="incomming_message"/>
       </div>
     </>
   )

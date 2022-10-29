@@ -102,27 +102,39 @@ const WebsocketMiddleware = function( req, res ) {
   this.commutations = Object.create( null );
   this.clients = new Set();
 
-  this.broadcast = function ( message, sessionId ) {
-    const commutationList = scope.commutations[ sessionId ];
+  this.broadcast = function ( message, req ) {
 
-    if ( commutationList&&commutationList.length ) {
+    function broadcastMessage ( identity, scope ) {
+      const commutationList = scope.commutations[ identity.username ];
 
-      const removalIds = [];
+      if ( commutationList&&commutationList.length ) {
 
-      for ( let i = 0, socket; i < commutationList.length; i++  ) {
+        const removalIds = [];
 
-        socket = commutationList[i];
+        for ( let i = 0, socket; i < commutationList.length; i++  ) {
 
-        if ( !scope.clients.has( socket ) ) {
-          removalIds.push( i );
-        } else {
-          socket.send( message );
+          socket = commutationList[i];
+
+          if ( !scope.clients.has( socket ) ) {
+            removalIds.push( i );
+          } else {
+            socket.send( JSON.stringify( {
+              type: 'message',
+              value: message
+            } ) );
+          }
         }
-      }
 
-      if ( removalIds.length ) 
-        scope.commutations[ sessionId ] = scope.reap( commutationList, removalIds )
+        if ( removalIds.length ) 
+          scope.commutations[ sessionId ] = scope.reap( commutationList, removalIds )
+      }
     }
+
+    sessionMiddleware( req, {}, function() {
+      
+      broadcastMessage( req.session.passport.user, scope );
+      
+    } )
   }
 
   this.reap = function ( arr, removelIds ) {
@@ -153,13 +165,7 @@ const WebsocketMiddleware = function( req, res ) {
       value: true
     }) )
 
-    sessionMiddleware( req, {}, function() {
-      
-      req.sessionStore.find( req.session.passport.user.username, ( sessionId ) => {
-        console.log( 'session id retrieved', sessionId );
-      }, true )
-      //console.log( 'socket connected', req.session.passport );
-    } )
+    
 
     socket.on( 'message', function ( message ) 
     {
@@ -174,13 +180,9 @@ const WebsocketMiddleware = function( req, res ) {
           
           commutations[ message.value ].push(socket);
 
-          console.log( 'listener setted up!', commutations );
-
         } else if (message.type === 'input') 
         {
-          console.log( 'input', message )
-          return
-          scope.broadcast( message.value, socket.session.Id );
+          scope.broadcast( message.value, req );
 
         } else {
 
