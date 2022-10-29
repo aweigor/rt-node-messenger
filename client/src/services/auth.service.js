@@ -2,7 +2,7 @@ import { createContext } from 'react';
 
 const AuthService = {
 
-  userInfo: { username:'asd' },
+  userInfo: { username:'' },
 
   logIn ( formData ) {
     const scope = this;

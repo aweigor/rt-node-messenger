@@ -1,58 +1,54 @@
 import { useEffect, useRef, useState, useContext } from 'react';
 import '../../styles/home.css';
-import { HttpClient, AuthService, UserContext } from '../../services';
+import { HttpClient, AuthService, UserContext, WebsocketService } from '../../services';
 
-const initWebsocket = function () {
-  let url ='ws://localhost:8001/ws';
-  return new WebSocket(url);
-}
+const ws_url = 'ws://localhost:8000/ws';
+const ws = new WebsocketService( ws_url );
 
 export default () => {
 
   const { userInfo } = useContext( UserContext );
 
-  console.log( userInfo )
-
-  const socket = initWebsocket();
-
   const [messages, addMessage] = useState<any[]>([]);
   const inputEl = useRef<HTMLTextAreaElement | null>(null);
   const outputEl = useRef<HTMLTextAreaElement | null>(null);
-  const scope = this;
 
   const  handleInput = function ( event: any ) {
     
-    let data = event.nativeEvent.data;
-    console.log( 'handling input...', event, socket, data );
-    if (socket) {
-      socket.send( JSON.stringify({
-        type: 'input',
-        data: data
-      }) );
-    }
+    const value = event.nativeEvent.data;
+    ws.commit( 'input', value );
     
   };
 
   useEffect( () => {
-    
-    socket.onmessage = function(event:any) {
-      let incomingMessage = event.data;
 
-      console.log( "socket onmessage", incomingMessage )
+    const handleConnection = ( isConnected: any ) => {
+      if ( isConnected ) ws.commit( 'listen', userInfo.username );
+    }
 
-      addMessage( ( prevState: any[] ) => [...prevState, incomingMessage] );
-    };
+    const handleMessage = ( message: any ) => {
+      console.log( 'message handled!', message );
+
+      //addMessage( ( prevState: any[] ) => [...prevState, incomingMessage] );
+    }
+
+    ws.on( 'connected', handleConnection );
+    ws.on( 'message', handleMessage );
+
+    const socket = ws.connect();
 
     socket.onclose = ( event:any ) => console.log(`Closed ${event.code}`);
 
-    return () => {};
+    return () => {
+      ws.off( 'connected', handleConnection );
+    };
   },[] )
 
   return (
     <>
       <div>
         <textarea rows={10} cols={45} onChange={handleInput} ref={outputEl} name="outcommingmessage"/>
-        <textarea rows={10} cols={45} onChange={handleInput} ref={inputEl} name="incomming_message"/>
+        <textarea rows={10} cols={45} ref={inputEl} name="incomming_message"/>
 
         { messages.map( function (message, index) {
             console.log( "MESSAGE", message )

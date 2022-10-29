@@ -11,9 +11,6 @@ const AnonymJSONStrategy = require('./lib/passport-local-custom/lib').Strategy;
 
 const port = 8000;
 
-// Use the BasicStrategy within Passport.
-//   This is used as a fallback in requests that prefer authentication, but
-//   support unauthenticated clients.
 passport.use(new AnonymJSONStrategy(
   { 
     identityField: 'username',
@@ -33,7 +30,6 @@ passport.use(new AnonymJSONStrategy(
   }
 ));
 
-// tell passport how to serialize the user
 passport.serializeUser((user, done) => {
   done(null, user);
 });
@@ -42,7 +38,6 @@ passport.deserializeUser((user, done) => {
   done( null, user );
 });
 
-// create the server
 const app = express();
 const httpServer = createServer(app);
 
@@ -53,8 +48,6 @@ const sessionMiddleware = session({
   resave: false,
   saveUninitialized: false
 })
-
-// add & configure middleware
 
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
@@ -68,28 +61,13 @@ app.get( '/runpage', (req, res, next) =>
 {
   if(req.isAuthenticated()) 
   {
+    console.log( 'session works', req.session )
     res.sendFile(path.join(__dirname, "../client", "build", "index.html"));  
   } else {
     res.redirect('/' );
   }
 } );
 
-
-/*
-app.use((req, res, next) => {
-  res.sendFile(path.join(__dirname, "../client", "build", "index.html"));
-});
-
-// create the homepage route at '/'
-app.get('/', (req, res) => {
-  res.send(`You got home page!\n`)
-})
-
-// create the login get and post routes
-app.get('/login', (req, res) => {
-  res.send(`You got the login page!\n`)
-})
-*/
 
 app.post('/login', (req, res, next) => {
   passport.authenticate(['local'], (err, user, info) => 
@@ -118,20 +96,6 @@ app.post( '/user', ( req, res, next ) =>
   }
   return next();
 } )
-
-/*
-app.get('/authrequired', (req, res) => {
-  if(req.isAuthenticated()) 
-  {
-    res.send( `Hello! ${req.user.email}\n` )
-  } else {
-    res.redirect('/')
-  }
-})
-*/
-
-const Broadcast = require( './src/broadcast.js' );
-const broadcast = new Broadcast();
 
 const WebsocketMiddleware = function( req, res ) {
 
@@ -180,9 +144,22 @@ const WebsocketMiddleware = function( req, res ) {
   const scope = this;
   const ws = new Server({server: httpServer});
 
-  ws.on( 'connection', (socket) => {
+  ws.on( 'connection', (socket, req) => {
 
     clients.add( socket );
+
+    socket.send( JSON.stringify({
+      type: 'connected',
+      value: true
+    }) )
+
+    sessionMiddleware( req, {}, function() {
+      
+      req.sessionStore.find( req.session.passport.user.username, ( sessionId ) => {
+        console.log( 'session id retrieved', sessionId );
+      }, true )
+      //console.log( 'socket connected', req.session.passport );
+    } )
 
     socket.on( 'message', function ( message ) 
     {
@@ -191,16 +168,19 @@ const WebsocketMiddleware = function( req, res ) {
 
         if ( message.type === 'listen' ) 
         {
-          if ( !message.data ) return;
-          if ( !commutations[ message.data ] ) 
-            commutations[ message.data ] = [];
+          if ( !message.value ) return;
+          if ( !commutations[ message.value ] ) 
+            commutations[ message.value ] = [];
           
-          commutations[ message.data ].push(socket);
+          commutations[ message.value ].push(socket);
 
-        } else if (message.type === 'commit') 
+          console.log( 'listener setted up!', commutations );
+
+        } else if (message.type === 'input') 
         {
-
-          scope.broadcast( message.data, socket.session.Id );
+          console.log( 'input', message )
+          return
+          scope.broadcast( message.value, socket.session.Id );
 
         } else {
 

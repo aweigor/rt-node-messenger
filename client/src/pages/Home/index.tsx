@@ -2,9 +2,6 @@ import { useEffect, useRef, useState, useContext } from 'react';
 import { useNavigate } from "react-router-dom";
 import { HttpClient, AuthService, UserContext } from '../../services';
 
-
-const client = HttpClient;
-
 export default () => 
 {
   const navigate = useNavigate();
@@ -12,7 +9,6 @@ export default () =>
   const inputEl = useRef<HTMLInputElement | null>(null);
 
   const { userInfo } = useContext( UserContext );
-
   console.log( userInfo )
 
   const onButtonClick = function (e: any) {
