@@ -27,8 +27,6 @@ export default () => {
     }
 
     const handleMessage = ( message: any ) => {
-      console.log( 'message handled!', message );
-
       addMessage( ( prevState: any[] ) => [...prevState, message] );
     }
 

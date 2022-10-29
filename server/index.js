@@ -97,15 +97,19 @@ app.post( '/user', ( req, res, next ) =>
   return next();
 } )
 
-const WebsocketMiddleware = function( req, res ) {
 
-  this.commutations = Object.create( null );
-  this.clients = new Set();
 
+const WebsocketMiddleware = function( socket ) {
+
+  const ws = socket;
+
+  const commutations = Object.create( null );
+  const clients = new Set();
+  
   this.broadcast = function ( message, req ) {
 
     function broadcastMessage ( identity, scope ) {
-      const commutationList = scope.commutations[ identity.username ];
+      const commutationList = commutations[ identity.username ];
 
       if ( commutationList&&commutationList.length ) {
 
@@ -115,7 +119,7 @@ const WebsocketMiddleware = function( req, res ) {
 
           socket = commutationList[i];
 
-          if ( !scope.clients.has( socket ) ) {
+          if ( !clients.has( socket ) ) {
             removalIds.push( i );
           } else {
             socket.send( JSON.stringify( {
@@ -126,7 +130,7 @@ const WebsocketMiddleware = function( req, res ) {
         }
 
         if ( removalIds.length ) 
-          scope.commutations[ sessionId ] = scope.reap( commutationList, removalIds )
+          commutations[ identity.username ] = scope.reap( commutationList, removalIds )
       }
     }
 
@@ -137,14 +141,14 @@ const WebsocketMiddleware = function( req, res ) {
     } )
   }
 
-  this.reap = function ( arr, removelIds ) {
+  this.reap = function ( arr, removalIds ) {
     let reaped = [];
 
     if ( arr instanceof Array ) {
       
-      reaped = JSON.decode( JSON.encode(arr) );
+      reaped = [...arr];
 
-      for ( let i = removelIds.length - 1; i >= 0; i-- ) {
+      for ( let i = removalIds.length - 1; i >= 0; i-- ) {
         reaped.splice( removalIds[i],1 );
       }
 
@@ -154,18 +158,18 @@ const WebsocketMiddleware = function( req, res ) {
   }
 
   const scope = this;
-  const ws = new Server({server: httpServer});
 
   ws.on( 'connection', (socket, req) => {
 
-    clients.add( socket );
-
-    socket.send( JSON.stringify({
-      type: 'connected',
-      value: true
-    }) )
-
     
+    if ( !clients.has( socket ) ) {
+      clients.add( socket );
+
+      socket.send( JSON.stringify({
+        type: 'connected',
+        value: true
+      }) )
+    }
 
     socket.on( 'message', function ( message ) 
     {
@@ -201,9 +205,16 @@ const WebsocketMiddleware = function( req, res ) {
     } )
     
   });
+  
+
+  return function (req, res) {
+
+  }
+  
 }
 
-app.use( WebsocketMiddleware );
+const wss = new Server({server: httpServer});
+app.use( WebsocketMiddleware( wss ) );
 
 
 httpServer.listen(port, () => {

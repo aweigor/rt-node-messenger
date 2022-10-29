@@ -9,6 +9,10 @@ class WebsocketService {
       this._socket.onmessage = handleMessage;
       return this._socket;
     }
+    this.disconnect = function () {
+      this._socket&&this._socket.close();
+      this._socket = null
+    }
   
     this.on = function ( type, callback ) {
       if ( !scope._events[ type ] )
@@ -38,7 +42,6 @@ class WebsocketService {
     const scope = this;
 
     function handleMessage( e ) {
-      console.log( 'handle websocket message', e )
       try {
         const message = JSON.parse( e.data );
 
