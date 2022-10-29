@@ -2,7 +2,7 @@ import { createContext } from 'react';
 
 const AuthService = {
 
-  userInfo: { username:'' },
+  userInfo: { loggedIn: false, username: null },
 
   logIn ( formData ) {
     const scope = this;
@@ -13,8 +13,9 @@ const AuthService = {
       scope.client.post( '/login', formData )
       .then( ( res ) => {
         if ( !res.error ) {
-          console.log( 'logged in', res )
           scope.userInfo = res.data;
+
+          scope.userInfo.loggedIn = true;
 
           this._onUserStatusChanged&&this._onUserStatusChanged( scope.userInfo )
           resolve( res );
@@ -26,7 +27,20 @@ const AuthService = {
     } )
   },
 
-  logOut () {},
+  logOut () {
+    const scope = this;
+
+
+    return new Promise( (resolve, reject) => {
+      if (!scope.client) reject( 'no client provided' );
+
+      scope.client.post( '/logout' )
+      .then( ( res ) => {
+        resolve ( res );
+      } )
+      .finally( () => { resolve(null) } )
+    } )
+  },
 
   init ( client, { loginUrl, logoutUrl } ) {
     const scope = this;
@@ -40,6 +54,7 @@ const AuthService = {
 
       if ( !res.error&&res.data ) {
         scope.userInfo = res.data;
+        scope.userInfo.loggedIn = true;
       } else {
         console.log( res )
       }

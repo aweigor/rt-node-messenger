@@ -21,7 +21,7 @@ export default () => {
   };
 
   useEffect( () => {
-
+    
     const handleConnection = ( isConnected: any ) => {
       if ( isConnected ) ws.commit( 'listen', userInfo.username );
     }

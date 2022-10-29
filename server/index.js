@@ -87,6 +87,15 @@ app.post('/login', (req, res, next) => {
   })(req, res, next);
 })
 
+app.post('/logout', ( req, res, next ) => {
+  req.logout( function( err ) {
+    if ( err ) return next( err );
+    res.redirect('/');
+  } )
+})
+
+
+
 app.post( '/user', ( req, res, next ) => 
 {
   if(req.isAuthenticated()) {
@@ -162,14 +171,12 @@ const WebsocketMiddleware = function( socket ) {
   ws.on( 'connection', (socket, req) => {
 
     
-    if ( !clients.has( socket ) ) {
-      clients.add( socket );
+    clients.add( socket );
 
-      socket.send( JSON.stringify({
-        type: 'connected',
-        value: true
-      }) )
-    }
+    socket.send( JSON.stringify({
+      type: 'connected',
+      value: true
+    }) )
 
     socket.on( 'message', function ( message ) 
     {

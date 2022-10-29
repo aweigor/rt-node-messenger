@@ -32,11 +32,11 @@ const RouterComponents = ({ userInfo }: any  ) =>
     const RouteComponent = () => 
     {
       return (
+        <UserContext.Provider value={{ userInfo }}>
           <Layout routes={routes}>
-            <UserContext.Provider value={{ userInfo }}>
-              <Component/>
-            </UserContext.Provider>
+            <Component/>
           </Layout>
+        </UserContext.Provider>
       )
     }
     return <Route path={path} element={<RouteComponent/>} key={index}/>

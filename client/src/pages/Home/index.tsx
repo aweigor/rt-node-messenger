@@ -26,10 +26,29 @@ export default () =>
       
   };
 
+  const UserControls = () => 
+  {
+    const { userInfo } = useContext( UserContext );
+
+    return (
+      <div className="">
+        <span>{userInfo['username']}</span>
+        <form action='logout' method='post'>
+          <input type='submit' value='logout'/>
+        </form>
+      </div>
+    ) 
+    
+  }
+
+  if (userInfo.loggedIn) {
+    return (<>{UserControls()}</>)
+  }
   return (
     <form name="publish">
       <input type="text" ref={inputEl} name="Имя"/>
       <input type="submit" onClick={onButtonClick} value="Вход"/>
     </form>
   )
+  
 }

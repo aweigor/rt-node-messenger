@@ -1,5 +1,7 @@
 import '../../styles/layout.css';
+import { useContext, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
+import { UserContext, AuthService } from '../../services'
 
 const undefinedIdentity = {
   username: '',
@@ -37,36 +39,46 @@ const Navbar = ( { routes } : {routes: any} ) =>
     (
       <li key={ index }>
         <a href={item.path}> { item.title } </a>
+        
       </li> 
     ) )
 
   return (
     <div className='app-navigation'>
       <ul> { navItems } </ul>
+      <UserControls/>
     </div>
   )
 }
 
 const UserControls = () => 
 {
-  const navigate = useNavigate();
-  let userInfo: string | null = sessionStorage.getItem( 'identity' );
+  const { userInfo } = useContext( UserContext );
 
-  if (!userInfo) {
-    navigate( '/login' );
+  const controls = ( userInfo:any ) => {
+    if (userInfo.loggedIn) {
+      return (
+        <>
+          <span>{userInfo['username']}</span>
+          <form action='logout' method='post'>
+            <input type='submit' value='logout'/>
+          </form>
+        </>
+      )
+    }
+    return (<></>)
   }
-  const identity: identityInterface = userInfo?JSON.parse( userInfo ):undefinedIdentity;
 
   return (
-    <>
-      <div className="user-controls">
-        <span>{identity['username']}</span>
-      </div>
-    </>
-  )
+    <div className="user-controls">
+      {controls(userInfo)}
+    </div>
+  ) 
+  
 }
 
 const Header = ( { children }: any ) => {
+
   return (
     <>
       <div className='app-header'>
@@ -83,7 +95,6 @@ export default ({ children, routes } : { children:any, routes:any }) =>
       <Container>
         <Header>
           <Navbar routes = { routes }/>
-          <UserControls/>
         </Header>
         
         <Content>
