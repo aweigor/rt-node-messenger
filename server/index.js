@@ -106,6 +106,23 @@ app.post( '/user', ( req, res, next ) =>
   return next();
 } )
 
+app.post( '/contactlist', ( req, res, next ) => {
+  if(req.isAuthenticated()) {
+    
+    req.sessionStore.map( ( err, sessions_list ) => {
+      if (!err) {
+        console.log ( 'get contacts', );
+        if ( !sessions_list ) return res.send( { error : 'storage error' } );
+        res.send( { error :null, data: Object.keys( sessions_list ) } );
+      } else {
+        res.send( { error :res } );
+      }
+    } )
+  } else {
+    return next();
+  }
+} )
+
 
 
 const WebsocketMiddleware = function( socket ) {
@@ -185,11 +202,26 @@ const WebsocketMiddleware = function( socket ) {
 
         if ( message.type === 'listen' ) 
         {
-          if ( !message.value ) return;
-          if ( !commutations[ message.value ] ) 
-            commutations[ message.value ] = [];
           
-          commutations[ message.value ].push(socket);
+          if ( !message.value ) return;
+          
+          const {prevTarget, currentTarget} = message.value;
+
+          if ( !currentTarget ) return;
+          
+          if ( !commutations[ currentTarget ] ) 
+            commutations[ currentTarget ] = [];
+          
+          commutations[ currentTarget ].push(socket);
+
+
+          // remove prev
+          if ( commutations[ prevTarget ] ) {
+            const removalId = commutations[ prevTarget ].indexOf( socket );
+            if ( removalId !== -1 ) {
+              commutations[ prevTarget ].splice( removalId, 1 );
+            }
+          }
 
         } else if (message.type === 'input') 
         {
